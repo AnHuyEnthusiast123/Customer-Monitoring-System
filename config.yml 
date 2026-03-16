@@ -1,0 +1,16 @@
+# Enable WebRTC
+webrtc: yes
+
+# Set WebRTC HTTP signaling port
+webrtcAddress: :8888
+
+# Disable HLS to avoid port conflict (not needed for your use case)
+hls: no
+
+# Paths configuration
+paths:
+  camera:
+    # Your RTSP source
+    source: rtsp://192.168.42.1/h264
+    rtspTransport: tcp  # Replacement for deprecated sourceProtocol
+    sourceOnDemand: yes  # Start source only when requested (optional)

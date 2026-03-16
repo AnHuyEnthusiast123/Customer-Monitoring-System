@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition Dashboard - Retail Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" rel="stylesheet">
+    <link href="https://vjs.zencdn.net/8.0.4/video-js.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            background-color: #f8f9fc; /* Secondary bg */
+            color: #212529; /* Text color */
+        }
+        .header {
+            background: linear-gradient(135deg, #007bff, #0056b3); /* Gradient primary */
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            font-weight: 700; /* Bold */
+            text-transform: uppercase; /* Uppercase for sync */
+            margin: 0;
+        }
+        .metric-card {
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 10px;
+            transition: transform 0.2s ease-in-out;
+            background-color: #ffffff;
+            margin-bottom: 20px;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        .metric-card h5 {
+            font-weight: 700; /* Bold titles */
+            color: #007bff; /* Primary color */
+            text-transform: uppercase; /* Sync all titles */
+        }
+        .metric-card p {
+            font-size: 2rem; /* Larger numbers */
+            font-weight: 700;
+            color: #212529;
+        }
+        .card {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 10px;
+            border: none;
+            background-color: #ffffff;
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-weight: 700; /* Bold */
+            color: #007bff; /* Primary */
+            text-transform: uppercase; /* Sync */
+        }
+        .card-body {
+            padding: 1.5rem;
+        }
+        canvas {
+            height: 250px !important; /* Fixed height for charts to prevent stretching */
+            width: 100% !important;
+        }
+        img {
+            max-width: 100px;
+            height: auto;
+            border-radius: 5px;
+        }
+        #videoContainer video {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        table.dataTable {
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+        table.dataTable tbody tr {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: background-color 0.2s;
+        }
+        table.dataTable tbody tr:hover {
+            background-color: #f0f4f8;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>Face Recognition Dashboard - Customer Tracking</h1>
+</div>
+<div class="container mt-4">
+    <!-- Key Metrics Cards -->
+    <div class="row mb-4" id="metricsRow">
+        <!-- Cards sẽ được populate bởi JS -->
+    </div>
+    <!-- Visualizations -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">New vs Returning Ratio</h5>
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Top Returning Customers</h5>
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- Thêm chart mới: Monthly Visits Trend -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Monthly Visits Trend</h5>
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Customer Details Table -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Customer Details</h5>
+            <div class="mb-3">
+                <label for="dateRange">Date Range:</label>
+                <input type="text" id="dateRange" class="form-control">
+            </div>
+            <table id="dataTable" class="display">
+                <thead>
+                <tr>
+                    <th>Person ID</th>
+                    <th>First Seen</th>
+                    <th>Last Seen</th>
+                    <th>Visit Count</th>
+                    <th>Image</th>
+                    <th>Status</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Live Stream -->
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Live Camera Stream</h5>
+            <div id="videoContainer"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://vjs.zencdn.net/8.0.4/video.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+<script>
+    // Configurable API base
+    const urlParams = new URLSearchParams(window.location.search);
+    const apiBase = urlParams.get('apiUrl') || 'http://localhost:8080';
+
+    // WebSocket
+    const socket = new WebSocket(`ws://${apiBase.split('://')[1]}/api/live`);
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log('WS update received:', data); // THÊM: Log để debug sync visit_count
+        updateMetrics();
+        updateCharts();
+        table.ajax.reload(); // Reload table để đồng bộ visit_count real-time
+    };
+
+    // Initial load
+    async function loadStats() {
+        try {
+            const response = await fetch(`${apiBase}/api/stats`);
+            if (!response.ok) throw new Error('Fetch stats failed');
+            const stats = await response.json();
+            const metricsRow = document.getElementById('metricsRow');
+            metricsRow.innerHTML = `
+                    <div class="col-md-3"><div class="metric-card"><div class="card-body"><h5>Total Unique Customers</h5><p>${stats.total_people}</p></div></div></div>
+                    <div class="col-md-3"><div class="metric-card"><div class="card-body"><h5>Total Visits</h5><p>${stats.total_visits}</p></div></div></div>
+                    <div class="col-md-3"><div class="metric-card"><div class="card-body"><h5>New Today</h5><p>${stats.new_today}</p></div></div></div>
+                    <div class="col-md-3"><div class="metric-card"><div class="card-body"><h5>Returning Today</h5><p>${stats.returning_today}</p></div></div></div>
+                `;
+        } catch (e) {
+            alert('Error loading stats: ' + e.message);
+        }
+    }
+
+    async function loadVisits() {
+        try {
+            const response = await fetch(`${apiBase}/api/visits`);
+            if (!response.ok) throw new Error('Fetch visits failed');
+            const data = await response.json();
+            // Update charts with axes labels
+            const newCount = data.filter(d => d.visit_count === 1).length;
+            const returningCount = data.length - newCount;
+            new Chart(document.getElementById('pieChart'), {
+                type: 'pie',
+                data: { labels: ['New', 'Returning'], datasets: [{ data: [newCount, returningCount], backgroundColor: ['#28a745', '#ffc107'] }] }, // Success green for New, yellow for Returning
+                options: { responsive: true, aspectRatio: 1 } // Preserve square aspect to prevent stretching
+            });
+
+            const topReturning = data.sort((a, b) => b.visit_count - a.visit_count).slice(0, 10);
+            new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: { labels: topReturning.map(d => d.person_id), datasets: [{ label: 'Visits', data: topReturning.map(d => d.visit_count), backgroundColor: '#007bff' }] },
+                options: {
+                    responsive: true,
+                    aspectRatio: 1.5, // Balanced for bar
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Person ID',
+                                font: { weight: 'bold', size: 14 },
+                                color: '#212529' // Dark color for clarity
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Visit Count',
+                                font: { weight: 'bold', size: 14 },
+                                color: '#212529' // Dark color for clarity
+                            },
+                            ticks: { stepSize: 1 } // Force integer ticks
+                        }
+                    }
+                }
+            });
+            // Gọi loadMonthlyVisits() để load chart mới
+            loadMonthlyVisits();
+        } catch (e) {
+            alert('Error loading visits: ' + e.message);
+        }
+    }
+
+    async function loadMonthlyVisits() {
+        try {
+            // Tính date range tháng hiện tại (timezone Asia/Ho_Chi_Minh)
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            const fromDate = firstDay.toISOString().split('T')[0];  // YYYY-MM-DD
+            const toDate = lastDay.toISOString().split('T')[0];
+            const dateRange = `${fromDate}:${toDate}`;
+
+            const response = await fetch(`${apiBase}/api/visits?date_range=${dateRange}`);
+            if (!response.ok) throw new Error('Fetch monthly visits failed');
+            const data = await response.json();
+
+            // Aggregate visits per day
+            const monthlyVisits = {};
+            data.forEach(item => {
+                const date = new Date(item.last_seen_ts).toLocaleDateString('vi-VN', {timeZone: 'Asia/Ho_Chi_Minh'});
+                monthlyVisits[date] = (monthlyVisits[date] || 0) + item.visit_count;  // Sum visit_count per day
+            });
+
+            // Sort dates (optional, nhưng tốt cho line chart)
+            const sortedDates = Object.keys(monthlyVisits).sort((a, b) => new Date(a) - new Date(b));
+
+            // Vẽ chart
+            const ctx = document.getElementById('monthlyChart');
+            if (ctx) {  // Destroy old chart nếu reload
+                if (window.monthlyChartInstance) window.monthlyChartInstance.destroy();
+                window.monthlyChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: sortedDates,
+                        datasets: [{
+                            label: 'Visits',
+                            data: sortedDates.map(date => monthlyVisits[date]),
+                            borderColor: '#28a745',  // Green để phân biệt
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        aspectRatio: 2,  // Wider cho line
+                        scales: {
+                            x: {
+                                title: { display: true, text: 'Date', font: { weight: 'bold', size: 14 }, color: '#212529' }
+                            },
+                            y: {
+                                title: { display: true, text: 'Number of Visits', font: { weight: 'bold', size: 14 }, color: '#212529' },
+                                ticks: { stepSize: 1 }
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (e) {
+            console.error('Error loading monthly visits:', e.message);
+            // Optional: Hiển thị error trên UI
+        }
+    }
+
+    function updateMetrics() {
+        loadStats();
+    }
+
+    function updateCharts() {
+        loadVisits();
+    }
+
+    // DataTable init
+    let table = $('#dataTable').DataTable({
+        ajax: {
+            url: `${apiBase}/api/visits`,
+            dataSrc: '',
+            data: function(d) {
+                let dateVal = $('#dateRange').val();
+                if (dateVal) {
+                    d.date_range = dateVal.replace(' to ', ':'); // Sửa format để khớp backend
+                }
+            },
+            error: function(xhr, error, thrown) {
+                console.error('DataTable AJAX error:', error, thrown, xhr.responseText); // Nếu response là JSON invalid, sẽ log ở đây
+            },
+            dataFilter: function(data) {
+                console.log('Raw AJAX data:', data); // Log data thô để check nếu là array valid
+                return data;
+            }
+        },
+        columns: [
+            { data: 'person_id' },
+            { data: 'first_seen_ts', render: function(d) {
+                    if (typeof d !== 'number' || isNaN(d) || d <= 0) return 'N/A';
+                    try {
+                        return new Date(d).toLocaleString('vi-VN', {timeZone: 'Asia/Ho_Chi_Minh'});
+                    } catch (e) {
+                        return 'Invalid TS';
+                    }
+                } },
+            { data: 'last_seen_ts', render: function(d) {
+                    if (typeof d !== 'number' || isNaN(d) || d <= 0) return 'N/A';
+                    try {
+                        return new Date(d).toLocaleString('vi-VN', {timeZone: 'Asia/Ho_Chi_Minh'});
+                    } catch (e) {
+                        return 'Invalid TS';
+                    }
+                } },
+            { data: 'visit_count' },
+            { data: null, render: function(d) {
+                    const img = new Image();  // Preload để ensure full load
+                    img.src = `${apiBase}/uploads/person_${d.person_id}.png`;
+                    img.alt = "Face";
+                    img.onerror = function() { console.error('Img fail:', this.src); this.style.display = 'none'; };
+                    img.onload = function() { console.log('Img loaded full:', this.src); };  // Log success
+                    return img.outerHTML;
+                } },
+            { data: 'visit_count', render: function(d) {
+                    return d > 1 ? 'Returning' : 'New';
+                } }
+        ]
+    });
+
+    // Flatpickr init
+    flatpickr('#dateRange', {
+        mode: 'range',
+        dateFormat: 'Y-m-d',
+        onChange: function() {
+            table.ajax.reload();
+        }
+    });
+
+    // WebRTC for MediaMTX with fixes (correct WHEP flow)
+    const pc = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] // STUN server
+    });
+    const video = document.createElement('video');
+    video.autoplay = true;
+    video.playsInline = true;
+    video.controls = true;
+    document.getElementById('videoContainer').appendChild(video);
+
+    let resourceUrl; // For trickle ICE PATCH
+
+    // Add transceiver to receive video (no send, since viewer)
+    pc.addTransceiver('video', { direction: 'recvonly' });
+
+    // Create and send SDP offer
+    pc.createOffer()
+        .then(offer => pc.setLocalDescription(offer))
+        .then(() => {
+            return fetch('http://localhost:8888/camera/whep', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/sdp' },
+                body: pc.localDescription.sdp
+            });
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`WHEP offer failed: ${res.status} - ${res.statusText}`);
+            resourceUrl = res.headers.get('location'); // For trickle ICE
+            console.log('Resource URL:', resourceUrl); // Debug
+            return res.text();
+        })
+        .then(answerSdp => {
+            console.log('Received SDP answer:', answerSdp); // Debug
+            return pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
+        })
+        .catch(e => console.error('WebRTC error:', e));
+
+    // Handle incoming tracks
+    pc.ontrack = event => {
+        video.srcObject = new MediaStream([event.track]);
+    };
+
+    // Trickle ICE: Send candidates to server via PATCH
+    pc.onicecandidate = event => {
+        if (event.candidate && resourceUrl) {
+            const candidateSdp = `a=${event.candidate.candidate}\r\n`;
+            fetch(resourceUrl, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/trickle-ice-sdpfrag' },
+                body: candidateSdp
+            })
+                .then(res => {
+                    if (!res.ok) console.warn('Trickle ICE PATCH failed:', res.status);
+                })
+                .catch(e => console.error('Trickle ICE error:', e));
+        }
+    };
+
+    // Load initial
+    loadStats();
+    loadVisits();
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9acc0ec47bf0fd95',t:'MTc2NTUzMDMwMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
