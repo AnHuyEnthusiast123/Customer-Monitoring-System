@@ -96,8 +96,10 @@ This aligns with the project summary in the CV: "Developed end-to-end system for
 ## Architecture and Workflow
 
 The system follows an end-to-end pipeline:
+FlowCharts/Overall.png
 
 1. **Video Processing & Detection (C - sample_vi_face_recog.c)**:
+    FlowCharts/sample_vi_face_recog.png
    - Logic: Multithreaded processing of video from camera, detect faces, and generate files.
    - Input: Video frames from camera (RTSP or VI pipeline on CV186X chip, configured via SAMPLE_TDL_MW_CONFIG_S).
    - Steps:
@@ -111,8 +113,11 @@ The system follows an end-to-end pipeline:
      - Error handling: CHECK_ERROR macro, signal handler for shutdown.
      - Cleanup: Free resources, destroy handles.
    - Output: Files in /mnt/data/faces/ and /features/.
+  
+    
 
-2. **Upload Files & Metadata (Go - main.go)**:
+3. **Upload Files & Metadata (Go - main.go)**:
+   FlowCharts/watcher.png
    - Logic: Watch directories and upload files/metadata to backend.
    - Input: Files from /mnt/data/faces/ (.png, .txt) and /features/ (.bin).
    - Steps:
@@ -124,7 +129,8 @@ The system follows an end-to-end pipeline:
      - Files not deleted after upload (commented).
    - Output: Data sent to backend /api/upload.
 
-3. **Backend Server & Database (Go - backend.go)**:
+5. **Backend Server & Database (Go - backend.go)**:
+   FlowCharts/backend.png
    - Logic: Handle uploads, update DB, provide APIs/WS, stream live.
    - Input: Uploads from uploader (multipart files + JSON metadata).
    - Steps:
@@ -139,7 +145,8 @@ The system follows an end-to-end pipeline:
      - CORS/Auth: For localhost:3000, JWT middleware (commented).
    - Output: DB updates, WS broadcasts, API responses, static /uploads, MediaMTX stream.
 
-4. **Frontend Dashboard (HTML/JS - index.html)**:
+7. **Frontend Dashboard (HTML/JS - index.html)**:
+   FlowCharts/dashboard.png
    - Logic: Display data from APIs/WS, charts/table, live stream.
    - Input: APIs from backend (/api/stats, /api/visits), WS updates, images from /uploads, stream from MediaMTX.
    - Steps:
