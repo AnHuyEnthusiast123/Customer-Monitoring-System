@@ -39,8 +39,7 @@ This aligns with the project summary in the CV: "Developed end-to-end system for
 
 1. Clone the repository:
    ```
-   git clone https://github.com/your-repo/awesomeProject.git
-   cd awesomeProject
+   git clone [https://github.com/your-repo/awesomeProject.git](https://github.com/AnHuyEnthusiast123/Customer-Monitoring-System.git)
    ```
 
 2. Build the Go binaries on the host:
