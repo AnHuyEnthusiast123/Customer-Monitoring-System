@@ -169,3 +169,11 @@ The system follows an end-to-end pipeline:
      - DataTable: Ajax /api/visits with date_range filter (Flatpickr), columns person_id/ts/visit_count/image/status.
      - Live Stream: WebRTC setup (RTCPeerConnection, offer/answer via POST to MediaMTX WHEP, trickle ICE PATCH).
    - Output: UI with cards/charts/table/stream.
+  
+  ## Result 
+  ### Board Processing
+  <img width="346" height="364" alt="image" src="https://github.com/user-attachments/assets/0e38a5d9-7e5a-4f1f-9143-59e565e9005f" />
+
+  ### UI
+  <img width="662" height="553" alt="image" src="https://github.com/user-attachments/assets/5944aec4-0399-4235-b8a6-0be18029ba71" />
+
