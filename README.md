@@ -6,6 +6,9 @@
 
 This project develops an end-to-end system for embedded face recognition, focusing on real-time video processing, metadata handling, and a user-friendly dashboard for retail applications. It enables automatic customer tracking in stores, distinguishing new and returning visitors to provide business insights like total visits, unique customers, and daily new/returning ratios. The system is optimized for edge devices, ensuring low-latency operation without heavy cloud dependency.
 
+<img width="768" height="164" alt="image" src="https://github.com/user-attachments/assets/e3abbd76-2a39-413b-ac67-37f998cf763e" />
+
+
 Key features include:
 - Face detection, quality assessment, feature extraction, and tracking on embedded hardware.
 - File uploading with retry mechanisms for reliable data transfer.
@@ -96,10 +99,14 @@ This aligns with the project summary in the CV: "Developed end-to-end system for
 ## Architecture and Workflow
 
 The system follows an end-to-end pipeline:
-FlowCharts/Overall.png
+
+<img width="523" height="780" alt="image" src="https://github.com/user-attachments/assets/8627a59b-c0e7-417a-b024-0c52313b1b1f" />
+
 
 1. **Video Processing & Detection (C - sample_vi_face_recog.c)**:
-    FlowCharts/sample_vi_face_recog.png
+
+  <img width="557" height="768" alt="image" src="https://github.com/user-attachments/assets/50e06c00-5e8e-491d-bda8-948de871ae3a" />
+
    - Logic: Multithreaded processing of video from camera, detect faces, and generate files.
    - Input: Video frames from camera (RTSP or VI pipeline on CV186X chip, configured via SAMPLE_TDL_MW_CONFIG_S).
    - Steps:
@@ -117,7 +124,9 @@ FlowCharts/Overall.png
     
 
 3. **Upload Files & Metadata (Go - main.go)**:
-   FlowCharts/watcher.png
+
+   <img width="880" height="860" alt="image" src="https://github.com/user-attachments/assets/368e9408-26c5-4ddc-b151-0d402ecc449f" />
+
    - Logic: Watch directories and upload files/metadata to backend.
    - Input: Files from /mnt/data/faces/ (.png, .txt) and /features/ (.bin).
    - Steps:
@@ -130,7 +139,9 @@ FlowCharts/Overall.png
    - Output: Data sent to backend /api/upload.
 
 5. **Backend Server & Database (Go - backend.go)**:
-   FlowCharts/backend.png
+
+   <img width="960" height="565" alt="image" src="https://github.com/user-attachments/assets/a189d9a4-e7bd-43a5-8927-3dc60dd7229a" />
+
    - Logic: Handle uploads, update DB, provide APIs/WS, stream live.
    - Input: Uploads from uploader (multipart files + JSON metadata).
    - Steps:
@@ -146,7 +157,9 @@ FlowCharts/Overall.png
    - Output: DB updates, WS broadcasts, API responses, static /uploads, MediaMTX stream.
 
 7. **Frontend Dashboard (HTML/JS - index.html)**:
-   FlowCharts/dashboard.png
+
+   <img width="960" height="311" alt="image" src="https://github.com/user-attachments/assets/bed441bf-2ac6-42a8-8c24-faac92f87ec7" />
+
    - Logic: Display data from APIs/WS, charts/table, live stream.
    - Input: APIs from backend (/api/stats, /api/visits), WS updates, images from /uploads, stream from MediaMTX.
    - Steps:
